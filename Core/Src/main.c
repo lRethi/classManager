@@ -276,7 +276,6 @@ static void gerarSenha(int *senhaRand){
 
 static void desenharTelaSenha(void){
 	ST7789_WriteString(24,10, "Entrar Senha", Font_16x26, verdeFODA, BLACK);
-		ST7789_WriteString(63, 84, "1", Font_16x26, WHITE, BLACK);
 		ST7789_DrawFilledRectangle(63, 110, 20, 2, WHITE);
 		ST7789_DrawFilledRectangle(93, 110, 20, 2, WHITE);
 		ST7789_DrawFilledRectangle(123, 110, 20, 2, WHITE);
@@ -285,6 +284,9 @@ static void desenharTelaSenha(void){
 		ST7789_WriteString(145,180, "2", Font_16x26, WHITE, BLACK);
 		ST7789_WriteString(110,210, "3", Font_16x26, WHITE, BLACK);
 		ST7789_WriteString(75,180, "4", Font_16x26, WHITE, BLACK);
+}
+static void escreverSenha(void){
+	ST7789_WriteString(63, 84, "1", Font_16x26, WHITE, BLACK);
 }
 
 static void entrarSenha(void){
