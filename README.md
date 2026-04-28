@@ -1,9 +1,6 @@
 # classManager
 Um aplicativo firmware feito para manipular e controlar um ambiente de sala de aula.
 
-# classManager
-Um aplicativo firmware feito para manipular e controlar um ambiente de sala de aula.
-
 1] Senha: Array[4], rand gera 1 número de 0 à 9 pra cada ponto do array pra senha.
 Teclado p/Senha: Teclado estilo celular antigo 4x3, com um botão de deletar e um de OK pra continuar.
 
