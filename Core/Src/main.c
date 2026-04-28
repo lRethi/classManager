@@ -269,10 +269,15 @@ static void iniciarPrograma(void){
 
 static void gerarSenha(int *senhaRand){
 	for(int bananas = 0; bananas < 4; bananas++){
-		int valGerado = (rand() % 4) + 1;
+		int valGerado = (rand() % 3) + 1;
 		senhaRand[bananas] = valGerado;
 	}
 }
+
+
+
+
+
 
 static void desenharTelaSenha(void){
 	ST7789_WriteString(24,10, "Entrar Senha", Font_16x26, verdeFODA, BLACK);
@@ -285,14 +290,57 @@ static void desenharTelaSenha(void){
 		ST7789_WriteString(110,210, "3", Font_16x26, WHITE, BLACK);
 		ST7789_WriteString(75,180, "4", Font_16x26, WHITE, BLACK);
 }
-static void escreverSenha(void){
-	ST7789_WriteString(63, 84, "1", Font_16x26, WHITE, BLACK);
+static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita){
+	char numStr[2];
+	numStr[0] = numEnviado + '0';
+	numStr[1] = '\0';
+	switch(qntNumeros){
+	case 1:
+		ST7789_WriteString(63, 84, numStr, Font_16x26, WHITE, BLACK);
+		break;
+	case 2:
+		ST7789_WriteString(93, 84, numStr, Font_16x26, WHITE, BLACK);
+		break;
+	case 3:
+		ST7789_WriteString(123, 84, numStr, Font_16x26, WHITE, BLACK);
+		break;
+	case 4:
+		ST7789_WriteString(153, 84, numStr, Font_16x26, WHITE, BLACK);
+		break;
+	}
+	senhaEscrita[qntNumeros-1] = numEnviado;
 }
 
 static void entrarSenha(void){
 	int senhaRand[4];
 	gerarSenha(senhaRand);
 	desenharTelaSenha();
+	int numEnviado = 0;
+	int qntNumeros = 0;
+	int senhaEscrita[4];
+	while(qntNumeros < 4){
+		if(botEsqLer == 0){
+				HAL_Delay(250);
+				qntNumeros++;
+				numEnviado = 4;
+				escreverSenha(numEnviado, qntNumeros, senhaEscrita);
+			}else if (botDirLer == 0){
+				HAL_Delay(250);
+				qntNumeros++;
+				numEnviado = 2;
+				escreverSenha(numEnviado, qntNumeros, senhaEscrita);
+			}else if (botCmaLer == 0){
+				HAL_Delay(250);
+				qntNumeros++;
+				numEnviado = 1;
+						escreverSenha(numEnviado, qntNumeros, senhaEscrita);
+			}else if (botBxoLer == 0){
+																			HAL_Delay(250);
+				qntNumeros++;
+				numEnviado = 3;
+						escreverSenha(numEnviado, qntNumeros, senhaEscrita);
+			}
+	}
 }
 /* USER CODE END 4 */
 
