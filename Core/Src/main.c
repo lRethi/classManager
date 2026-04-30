@@ -95,7 +95,6 @@ int main(void) {
 	HAL_Init();
 
 	/* USER CODE BEGIN Init */
-	srand(HAL_GetTick());
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -122,8 +121,9 @@ int main(void) {
 		ST7789_Fill_Color(BLACK);
 		ST7789_WriteString(16, 26, "Bem-vindo professor.", Font_16x26, WHITE,
 		BLACK);
-		HAL_Delay(150);
+		HAL_Delay(250);
 		ST7789_Fill_Color(BLACK);
+
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
@@ -267,6 +267,7 @@ static void iniciarPrograma(void) {
 }
 
 static void gerarSenha(int *senhaRand) {
+	srand(HAL_GetTick());
 	for (int bananas = 0; bananas < 4; bananas++) {
 		int valGerado = (rand() % 3) + 1;
 		senhaRand[bananas] = valGerado;
@@ -305,36 +306,38 @@ static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita) {
 	senhaEscrita[qntNumeros - 1] = numEnviado;
 }
 
-static void enviarNumeroPraSenha(int numEnviado, int qntNumeros,
-		int *senhaEscrita) {
-	qntNumeros++;
+static void enviarNumeroPraSenha(int numEnviado, int qntNumeros,		int *senhaEscrita) {
 	escreverSenha(numEnviado, qntNumeros, senhaEscrita);
 }
 
 static void entrarSenha(void) {
 	bool senhaCorreta = false;
+	int qntNumeros = 0;
+	int senhaRand[4];
+	int senhaEscrita[4];
+	int numEnviado = 0;
+	gerarSenha(senhaRand);
+	desenharTelaSenha();
 	for (int laranjas = 0; laranjas < 3; laranjas++) {
-		int senhaRand[4];
-		gerarSenha(senhaRand);
-		desenharTelaSenha();
-		int numEnviado = 0;
-		int qntNumeros = 0;
-		int senhaEscrita[4];
 		while (qntNumeros < 4) {
 			if (botEsqLer == 0) {
 				HAL_Delay(250);
+				qntNumeros++;
 				numEnviado = 4;
 				enviarNumeroPraSenha(numEnviado, qntNumeros, senhaEscrita);
 			} else if (botDirLer == 0) {
 				HAL_Delay(250);
+				qntNumeros++;
 				numEnviado = 2;
 				enviarNumeroPraSenha(numEnviado, qntNumeros, senhaEscrita);
 			} else if (botCmaLer == 0) {
 				HAL_Delay(250);
+				qntNumeros++;
 				numEnviado = 1;
 				enviarNumeroPraSenha(numEnviado, qntNumeros, senhaEscrita);
 			} else if (botBxoLer == 0) {
 				HAL_Delay(250);
+				qntNumeros++;
 				numEnviado = 3;
 				enviarNumeroPraSenha(numEnviado, qntNumeros, senhaEscrita);
 			}
@@ -383,19 +386,26 @@ static void definirAlunos(void) {
 	desenharTelaAlunos();
 	bool definindoAlunos = true;
 	int numEnviado = 0;
-	while(definindoAlunos){
-		if (botEsqLer == 0) {
+	while (definindoAlunos) {
+		if (botEsqLer == 0
+				&& (botDirLer == 1 && botCmaLer == 1 && botBxoLer == 1)) {
 			HAL_Delay(250);
 			numEnviado = 5;
-		} else if (botDirLer == 0) {
+		} else if (botDirLer == 0
+				&& (botEsqLer == 1 && botCmaLer == 1 && botBxoLer == 1)) {
 			HAL_Delay(250);
 			numEnviado = -5;
-		} else if (botCmaLer == 0) {
+		} else if (botCmaLer == 0
+				&& (botDirLer == 1 && botEsqLer == 1 && botBxoLer == 1)) {
 			HAL_Delay(250);
 			numEnviado = 1;
-		} else if (botBxoLer == 0) {
+		} else if (botBxoLer == 0
+				&& (botDirLer == 1 && botCmaLer == 1 && botEsqLer == 1)) {
 			HAL_Delay(250);
 			numEnviado = -1;
+		} else if (botDirLer == 0 || botEsqLer == 0 || botCmaLer == 0
+				|| botBxoLer == 0) {
+			definindoAlunos = false;
 		}
 	}
 }
