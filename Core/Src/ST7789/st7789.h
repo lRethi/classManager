@@ -187,8 +187,6 @@ extern SPI_HandleTypeDef ST7789_SPI_PORT;
 #define DARKBLUE    0X01CF
 #define LIGHTBLUE   0X7D7C
 #define GRAYBLUE    0X5458
-#define roxoDS		0xa81f
-#define verdeFODA	0x0463
 
 #define LIGHTGREEN  0X841F
 #define LGRAY       0XC618

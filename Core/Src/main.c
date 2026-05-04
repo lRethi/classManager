@@ -40,8 +40,11 @@
 #define botCmaLer HAL_GPIO_ReadPin(botCima_GPIO_Port, botCima_Pin)
 #define botBxoLer HAL_GPIO_ReadPin(botBaixo_GPIO_Port, botBaixo_Pin)
 
-#define tentMaxSenhas 3;
-#define maxAlunosFora 3;
+#define tentMaxSenhas 3
+#define maxAlunosFora 3
+
+#define roxoDS		0xa81f
+#define verdeFODA	0x0463
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -76,8 +79,10 @@ static void MX_SPI1_Init(void);
 static void iniciarPrograma(void);
 static void entrarSenha(void);
 static void definirAlunos(void);
-static int controlePresenca(void);
-static void controleSaida(void);
+static void interfacePrincipal(void);
+static void controlePresenca(int numEnviado);
+static void controleSaida(int numEnviado);
+static void encerrarPrograma(void);
 /* USER CODE END 0 */
 
 /**
@@ -123,7 +128,8 @@ int main(void) {
 		BLACK);
 		HAL_Delay(250);
 		ST7789_Fill_Color(BLACK);
-
+		definirAlunos();
+		interfacePrincipal();
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
@@ -287,8 +293,7 @@ static void desenharTelaSenha(void) {
 }
 static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita) {
 	char numStr[2];
-	numStr[0] = numEnviado + '0';
-	numStr[1] = '\0';
+	itoa(numEnviado, numStr, 10);
 	switch (qntNumeros) {
 	case 1:
 		ST7789_WriteString(63, 84, numStr, Font_16x26, WHITE, BLACK);
@@ -306,7 +311,8 @@ static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita) {
 	senhaEscrita[qntNumeros - 1] = numEnviado;
 }
 
-static void enviarNumeroPraSenha(int numEnviado, int qntNumeros,		int *senhaEscrita) {
+static void enviarNumeroPraSenha(int numEnviado, int qntNumeros,
+		int *senhaEscrita) {
 	escreverSenha(numEnviado, qntNumeros, senhaEscrita);
 }
 
@@ -376,36 +382,158 @@ static void entrarSenha(void) {
 
 static void desenharTelaAlunos() {
 	ST7789_WriteString(24, 10, "Qnt. Alunos", Font_16x26, verdeFODA, BLACK);
-	ST7789_DrawFilledRectangle(123, 110, 50, 2, WHITE);
+	ST7789_DrawFilledRectangle(100, 110, 50, 2, WHITE);
 	ST7789_WriteString(110, 150, "+1", Font_16x26, WHITE, BLACK);
 	ST7789_WriteString(145, 180, "-5", Font_16x26, WHITE, BLACK);
 	ST7789_WriteString(110, 210, "-1", Font_16x26, WHITE, BLACK);
 	ST7789_WriteString(75, 180, "+5", Font_16x26, WHITE, BLACK);
+}
+
+static void enviarNumeroAlunos(int numEnviado) {
+	qntAlunosReg += numEnviado;
+	qntAlunosReg = (qntAlunosReg > 999) ? 999 : qntAlunosReg;
+	qntAlunosReg = (qntAlunosReg < 0) ? 0 : qntAlunosReg;
+	char numStr[3];
+	itoa(qntAlunosReg, numStr, 10);
+	ST7789_DrawFilledRectangle(100, 84, 50, 26, BLACK);
+	if (qntAlunosReg > 99) {
+		ST7789_WriteString(100, 84, numStr, Font_16x26, WHITE, BLACK);
+	} else if (qntAlunosReg > 9) {
+		ST7789_WriteString(108, 84, numStr, Font_16x26, WHITE, BLACK);
+	} else {
+		ST7789_WriteString(116, 84, numStr, Font_16x26, WHITE, BLACK);
+	}
+
 }
 static void definirAlunos(void) {
 	desenharTelaAlunos();
 	bool definindoAlunos = true;
 	int numEnviado = 0;
 	while (definindoAlunos) {
-		if (botEsqLer == 0
-				&& (botDirLer == 1 && botCmaLer == 1 && botBxoLer == 1)) {
+		int botoesPressionados = (botEsqLer == 0) + (botDirLer == 0)
+				+ (botCmaLer == 0) + (botBxoLer == 0);
+
+		HAL_Delay(50);
+
+		if (botEsqLer == 0 && botoesPressionados == 1) {
 			HAL_Delay(250);
 			numEnviado = 5;
-		} else if (botDirLer == 0
-				&& (botEsqLer == 1 && botCmaLer == 1 && botBxoLer == 1)) {
+			enviarNumeroAlunos(numEnviado);
+
+		} else if (botDirLer == 0 && botoesPressionados == 1) {
 			HAL_Delay(250);
 			numEnviado = -5;
-		} else if (botCmaLer == 0
-				&& (botDirLer == 1 && botEsqLer == 1 && botBxoLer == 1)) {
+			enviarNumeroAlunos(numEnviado);
+
+		} else if (botCmaLer == 0 && botoesPressionados == 1) {
 			HAL_Delay(250);
 			numEnviado = 1;
-		} else if (botBxoLer == 0
-				&& (botDirLer == 1 && botCmaLer == 1 && botEsqLer == 1)) {
+			enviarNumeroAlunos(numEnviado);
+
+		} else if (botBxoLer == 0 && botoesPressionados == 1) {
 			HAL_Delay(250);
 			numEnviado = -1;
-		} else if (botDirLer == 0 || botEsqLer == 0 || botCmaLer == 0
-				|| botBxoLer == 0) {
+			enviarNumeroAlunos(numEnviado);
+
+		} else if (botoesPressionados >= 2) {
 			definindoAlunos = false;
+		}
+	}
+}
+static void controlePresenca(int numEnviado) {
+	qntAlunosSala += numEnviado;
+	qntAlunosSala =
+			(qntAlunosSala > qntAlunosReg) ? qntAlunosReg : qntAlunosSala;
+	qntAlunosSala = (qntAlunosSala < 0) ? 0 : qntAlunosSala;
+	char numStr[3];
+	itoa(qntAlunosSala, numStr, 10);
+	if (qntAlunosSala > 9) {
+		ST7789_DrawFilledRectangle(90, 26, 32, 26, BLACK);
+		ST7789_WriteString(90, 26, numStr, Font_16x26, WHITE, BLACK);
+	} else if (numEnviado == -1 && qntAlunosSala == 9) {
+		ST7789_DrawFilledRectangle(90, 26, 32, 26, BLACK);
+		ST7789_WriteString(90, 26, "0", Font_16x26, WHITE, BLACK);
+		ST7789_WriteString(106, 26, numStr, Font_16x26, WHITE, BLACK);
+	} else {
+		ST7789_DrawFilledRectangle(106, 26, 16, 26, BLACK);
+		ST7789_WriteString(106, 26, numStr, Font_16x26, WHITE, BLACK);
+	}
+}
+
+static void controleSaida(int numEnviado) {
+	qntAlunosFora += numEnviado;
+	qntAlunosFora =
+			(qntAlunosFora > maxAlunosFora) ? maxAlunosFora : qntAlunosFora;
+	qntAlunosFora = (qntAlunosFora > 0) ? qntAlunosFora : 0;
+	if (numEnviado == 1 && qntAlunosFora < 3)
+		qntTotalSaidas++;
+	int qntDisponivel = 3 - qntAlunosFora;
+	char numStr1[1];
+	itoa(qntAlunosFora, numStr1, 10);
+	ST7789_DrawFilledRectangle(30, 100, 16, 26, BLACK);
+	ST7789_WriteString(30, 100, numStr1, Font_16x26, RED, BLACK);
+	char numStr2[1];
+	itoa(qntDisponivel, numStr2, 10);
+	ST7789_DrawFilledRectangle(190, 100, 16, 26, BLACK);
+	ST7789_WriteString(190, 100, numStr2, Font_16x26, GREEN, BLACK);
+}
+
+static void encerrarPrograma(void) {
+	uint32_t tempoFimAula = HAL_GetTick();
+	uint32_t tempoTotalAula = (tempoFimAula - tempoInicioAula) / 1000;
+	ST7789_Fill_Color(BLACK);
+	char numStr[5];
+	ST7789_WriteString(8, 26, "AULA CONCLUIDA", Font_16x26, WHITE, BLACK);
+
+	ST7789_WriteString(0, 100, "Pres.:", Font_16x26, WHITE, BLACK);
+	itoa(qntAlunosSala, numStr, 10);
+	ST7789_WriteString(112, 100, numStr, Font_16x26, WHITE, BLACK);
+
+	ST7789_WriteString(0, 130, "Saidas:", Font_16x26, WHITE, BLACK);
+	itoa(qntTotalSaidas, numStr, 10);
+	ST7789_WriteString(128, 130, numStr, Font_16x26, WHITE, BLACK);
+
+	ST7789_WriteString(0, 160, "Dur.:", Font_16x26, WHITE, BLACK);
+	itoa(tempoTotalAula, numStr, 10);
+	ST7789_WriteString(96, 160, numStr, Font_16x26, WHITE, BLACK);
+}
+
+static void interfacePrincipal(void) {
+	tempoInicioAula = HAL_GetTick();
+	ST7789_Fill_Color(BLACK);
+	ST7789_WriteString(110, 150, "+", Font_16x26, WHITE, BLACK);
+	ST7789_WriteString(145, 180, "+", Font_16x26, GREEN, BLACK);
+	ST7789_WriteString(110, 210, "-", Font_16x26, WHITE, BLACK);
+	ST7789_WriteString(75, 180, "-", Font_16x26, RED, BLACK);
+	ST7789_WriteString(30, 100, "0", Font_16x26, RED, BLACK);
+	ST7789_WriteString(190, 100, "3", Font_16x26, GREEN, BLACK);
+	ST7789_WriteString(90, 26, "00/", Font_16x26, WHITE, BLACK);
+	char numStr[3];
+	itoa(qntAlunosReg, numStr, 10);
+	ST7789_WriteString(138, 26, numStr, Font_16x26, WHITE, BLACK);
+	while (1) {
+		int botoesPressionados = (botEsqLer == 0) + (botDirLer == 0)
+				+ (botCmaLer == 0) + (botBxoLer == 0);
+		HAL_Delay(50);
+
+		if (botEsqLer == 0 && botoesPressionados == 1) {
+			HAL_Delay(250);
+			int numEnviado = 1;
+			controleSaida(numEnviado);
+		} else if (botDirLer == 0 && botoesPressionados == 1) {
+			HAL_Delay(250);
+			int numEnviado = -1;
+			controleSaida(numEnviado);
+		} else if (botCmaLer == 0 && botoesPressionados == 1) {
+			HAL_Delay(250);
+			int numEnviado = 1;
+			controlePresenca(numEnviado);
+		} else if (botBxoLer == 0 && botoesPressionados == 1) {
+			HAL_Delay(250);
+			int numEnviado = -1;
+			controlePresenca(numEnviado);
+		} else if (botoesPressionados >= 2) {
+			encerrarPrograma();
 		}
 	}
 }
