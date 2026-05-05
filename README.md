@@ -4,7 +4,7 @@ Projeto integrado do primeiro trimestre da disciplina de Linguagem de Programaç
 
 O **Class Manager** é um sistema embarcado desenvolvido em **STM32F103C8** com interface gráfica em **display ST7789 240x240**, voltado para o controle de presença, quantidade de alunos em sala e tempo médio fora da sala.
 
-**- Dupla: **
+**- Dupla:**
 Fred 
 Livia
 
