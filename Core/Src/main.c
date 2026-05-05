@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ST7789\st7789.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
@@ -60,6 +61,11 @@ int qntAlunosSala;
 int qntAlunosReg;
 int qntAlunosFora;
 int qntTotalSaidas;
+int qntTotalEntradas;
+int capArraySaida = 4;
+int capArrayEntrada = 4;
+uint32_t *arrayTempoSaida = NULL;
+uint32_t *arrayTempoEntrada = NULL;
 uint32_t tempoInicioAula;
 uint32_t tempoEntrada[];
 uint32_t tempoSaida[];
@@ -100,6 +106,8 @@ int main(void) {
 	HAL_Init();
 
 	/* USER CODE BEGIN Init */
+	arrayTempoSaida = malloc(capArraySaida * sizeof(uint32_t));
+	arrayTempoEntrada = malloc(capArrayEntrada * sizeof(uint32_t));
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -393,7 +401,7 @@ static void enviarNumeroAlunos(int numEnviado) {
 	qntAlunosReg += numEnviado;
 	qntAlunosReg = (qntAlunosReg > 999) ? 999 : qntAlunosReg;
 	qntAlunosReg = (qntAlunosReg < 0) ? 0 : qntAlunosReg;
-	char numStr[3];
+	char numStr[5];
 	itoa(qntAlunosReg, numStr, 10);
 	ST7789_DrawFilledRectangle(100, 84, 50, 26, BLACK);
 	if (qntAlunosReg > 99) {
@@ -465,24 +473,68 @@ static void controleSaida(int numEnviado) {
 	qntAlunosFora =
 			(qntAlunosFora > maxAlunosFora) ? maxAlunosFora : qntAlunosFora;
 	qntAlunosFora = (qntAlunosFora > 0) ? qntAlunosFora : 0;
-	if (numEnviado == 1 && qntAlunosFora < 3)
+
+	if (numEnviado == 1 && qntAlunosFora <= maxAlunosFora) {
+		uint32_t tempTick = HAL_GetTick();
 		qntTotalSaidas++;
+		if (qntTotalSaidas >= capArraySaida) {
+			int novoCap = capArraySaida * 2;
+			uint32_t *temp = realloc(arrayTempoSaida,
+					novoCap * sizeof(uint32_t));
+
+			if (temp != NULL) {
+				arrayTempoSaida = temp;
+				capArraySaida = novoCap;
+			}
+		}
+		arrayTempoSaida[qntTotalSaidas - 1] = tempTick;
+	} else if (numEnviado == -1) {
+		uint32_t tempTick = HAL_GetTick();
+		qntTotalEntradas++;
+		if (qntTotalEntradas >= capArrayEntrada) {
+			int novoCap = capArrayEntrada * 2;
+			uint32_t *temp = realloc(arrayTempoEntrada,
+					novoCap * sizeof(uint32_t));
+
+			if (temp != NULL) {
+				arrayTempoEntrada = temp;
+				capArrayEntrada = novoCap;
+			}
+		}
+		arrayTempoEntrada[qntTotalEntradas - 1] = tempTick;
+	}
+
 	int qntDisponivel = 3 - qntAlunosFora;
-	char numStr1[1];
-	itoa(qntAlunosFora, numStr1, 10);
+
+	char numStr[3];
+	itoa(qntAlunosFora, numStr, 10);
 	ST7789_DrawFilledRectangle(30, 100, 16, 26, BLACK);
-	ST7789_WriteString(30, 100, numStr1, Font_16x26, RED, BLACK);
-	char numStr2[1];
-	itoa(qntDisponivel, numStr2, 10);
+	ST7789_WriteString(30, 100, numStr, Font_16x26, RED, BLACK);
+
+	itoa(qntDisponivel, numStr, 10);
 	ST7789_DrawFilledRectangle(190, 100, 16, 26, BLACK);
-	ST7789_WriteString(190, 100, numStr2, Font_16x26, GREEN, BLACK);
+	ST7789_WriteString(190, 100, numStr, Font_16x26, GREEN, BLACK);
 }
 
 static void encerrarPrograma(void) {
+	uint32_t somaTempos = 0;
+
+	int menorQuantidade =
+			(qntTotalSaidas < qntTotalEntradas) ?
+					qntTotalSaidas : qntTotalEntradas;
+
+	for (int i = 0; i < menorQuantidade; i++) {
+		somaTempos += (arrayTempoEntrada[i] - arrayTempoSaida[i]);
+	}
+
+	uint32_t tempoMedioSaidas = 0;
+	if (menorQuantidade > 0)
+		tempoMedioSaidas = (somaTempos / menorQuantidade) / 1000;
+
 	uint32_t tempoFimAula = HAL_GetTick();
 	uint32_t tempoTotalAula = (tempoFimAula - tempoInicioAula) / 1000;
 	ST7789_Fill_Color(BLACK);
-	char numStr[5];
+	char numStr[11];
 	ST7789_WriteString(8, 26, "AULA CONCLUIDA", Font_16x26, WHITE, BLACK);
 
 	ST7789_WriteString(0, 100, "Pres.:", Font_16x26, WHITE, BLACK);
@@ -496,6 +548,13 @@ static void encerrarPrograma(void) {
 	ST7789_WriteString(0, 160, "Dur.:", Font_16x26, WHITE, BLACK);
 	itoa(tempoTotalAula, numStr, 10);
 	ST7789_WriteString(96, 160, numStr, Font_16x26, WHITE, BLACK);
+
+	ST7789_WriteString(0, 190, "T.M.S.:", Font_16x26, WHITE, BLACK);
+	itoa(tempoMedioSaidas, numStr, 10);
+	ST7789_WriteString(144, 190, numStr, Font_16x26, WHITE, BLACK);
+	while (1) {
+		// FIM DO PROGRAMA
+	}
 }
 
 static void interfacePrincipal(void) {
