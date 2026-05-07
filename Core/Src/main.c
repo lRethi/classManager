@@ -66,9 +66,8 @@ int capArraySaida = 4;
 int capArrayEntrada = 4;
 uint32_t *arrayTempoSaida = NULL;
 uint32_t *arrayTempoEntrada = NULL;
+uint32_t *arrayMatriculas = NULL;
 uint32_t tempoInicioAula;
-uint32_t tempoEntrada[];
-uint32_t tempoSaida[];
 
 /* USER CODE END PV */
 
@@ -129,6 +128,7 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
+		/*
 		iniciarPrograma();
 		entrarSenha();
 		ST7789_Fill_Color(BLACK);
@@ -136,6 +136,7 @@ int main(void) {
 		BLACK);
 		HAL_Delay(250);
 		ST7789_Fill_Color(BLACK);
+		*/
 		definirAlunos();
 		interfacePrincipal();
 		/* USER CODE BEGIN 3 */
@@ -447,24 +448,52 @@ static void definirAlunos(void) {
 			definindoAlunos = false;
 		}
 	}
+	arrayMatriculas = malloc(qntAlunosReg * sizeof(int));
 }
+
+static int confirmarMatricula(void) {
+	bool matriculaEnviada = false;
+	int valMatricula = -1;
+	while (!matriculaEnviada) {
+		if (valMatricula != -1) {
+			if (valMatricula == 0)
+				return 0;
+			for (int jacas = 0; jacas < sizeof(arrayMatriculas); jacas++) {
+				if (valMatricula == arrayMatriculas[jacas])
+					return 0;
+				else if (arrayMatriculas[jacas] == 0) {
+					arrayMatriculas[jacas] = valMatricula;
+					matriculaEnviada = true;
+					break;
+				}
+			}
+		}
+	}
+	return 1;
+}
+
 static void controlePresenca(int numEnviado) {
-	qntAlunosSala += numEnviado;
-	qntAlunosSala =
-			(qntAlunosSala > qntAlunosReg) ? qntAlunosReg : qntAlunosSala;
-	qntAlunosSala = (qntAlunosSala < 0) ? 0 : qntAlunosSala;
-	char numStr[3];
-	itoa(qntAlunosSala, numStr, 10);
-	if (qntAlunosSala > 9) {
-		ST7789_DrawFilledRectangle(90, 26, 32, 26, BLACK);
-		ST7789_WriteString(90, 26, numStr, Font_16x26, WHITE, BLACK);
-	} else if (numEnviado == -1 && qntAlunosSala == 9) {
-		ST7789_DrawFilledRectangle(90, 26, 32, 26, BLACK);
-		ST7789_WriteString(90, 26, "0", Font_16x26, WHITE, BLACK);
-		ST7789_WriteString(106, 26, numStr, Font_16x26, WHITE, BLACK);
-	} else {
-		ST7789_DrawFilledRectangle(106, 26, 16, 26, BLACK);
-		ST7789_WriteString(106, 26, numStr, Font_16x26, WHITE, BLACK);
+	if (confirmarMatricula() == 1) {
+		qntAlunosSala += numEnviado;
+		qntAlunosSala =
+				(qntAlunosSala > qntAlunosReg) ? qntAlunosReg : qntAlunosSala;
+		qntAlunosSala = (qntAlunosSala < 0) ? 0 : qntAlunosSala;
+		char numStr[3];
+		itoa(qntAlunosSala, numStr, 10);
+		if (qntAlunosSala > 9) {
+			ST7789_DrawFilledRectangle(90, 26, 32, 26, BLACK);
+			ST7789_WriteString(90, 26, numStr, Font_16x26, WHITE, BLACK);
+		} else if (numEnviado == -1 && qntAlunosSala == 9) {
+			ST7789_DrawFilledRectangle(90, 26, 32, 26, BLACK);
+			ST7789_WriteString(90, 26, "0", Font_16x26, WHITE, BLACK);
+			ST7789_WriteString(106, 26, numStr, Font_16x26, WHITE, BLACK);
+		} else {
+			ST7789_DrawFilledRectangle(106, 26, 16, 26, BLACK);
+			ST7789_WriteString(106, 26, numStr, Font_16x26, WHITE, BLACK);
+		}
+	} else if (confirmarMatricula() == 0) {
+		ST7789_WriteString(20, 200, "MATRICULA INVALIDA!", Font_11x18, WHITE,
+		BLACK);
 	}
 }
 
