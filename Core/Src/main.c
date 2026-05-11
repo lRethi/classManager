@@ -128,7 +128,7 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
-		/*
+		//pegamos todas as funções e botamos em ordem
 		iniciarPrograma();
 		entrarSenha();
 		ST7789_Fill_Color(BLACK);
@@ -136,7 +136,6 @@ int main(void) {
 		BLACK);
 		HAL_Delay(250);
 		ST7789_Fill_Color(BLACK);
-		*/
 		definirAlunos();
 		interfacePrincipal();
 		/* USER CODE BEGIN 3 */
@@ -277,8 +276,9 @@ static void esperandoP10(void) {
 static void iniciarPrograma(void) {
 	ST7789_WriteString(16, 50, "Class Manager", Font_16x26, verdeFODA, BLACK);
 	ST7789_WriteString(94, 86, "34-DS", Font_11x18, roxoDS, BLACK);
-	ST7789_WriteString(16, 200, "- PRESS P10 -", Font_16x26, WHITE, BLACK);
+	ST7789_WriteString(16, 200, "- PRESS PA10 -", Font_16x26, WHITE, BLACK);
 	esperandoP10();
+	//"printa" a tela inicial e espera o pa10
 }
 
 static void gerarSenha(int *senhaRand) {
@@ -286,6 +286,7 @@ static void gerarSenha(int *senhaRand) {
 	for (int bananas = 0; bananas < 4; bananas++) {
 		int valGerado = (rand() % 3) + 1;
 		senhaRand[bananas] = valGerado;
+		//gera um numero por ves da senha
 	}
 }
 
@@ -299,11 +300,16 @@ static void desenharTelaSenha(void) {
 	ST7789_WriteString(145, 180, "2", Font_16x26, WHITE, BLACK);
 	ST7789_WriteString(110, 210, "3", Font_16x26, WHITE, BLACK);
 	ST7789_WriteString(75, 180, "4", Font_16x26, WHITE, BLACK);
+	//desenha a tela da senha
 }
 static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita) {
+	//MUITO DIFICIL DE ENTENDER mas é facil de usar
 	char numStr[2];
+	//o char numStr tem duas casas
 	itoa(numEnviado, numStr, 10);
+	//o numero enviado vai ser o numStr uhhhhh puts aqui eu realmente embananei faz tempo que agnt usou eu esqueci como funciona mds
 	switch (qntNumeros) {
+	//muda para cada "caso"
 	case 1:
 		ST7789_WriteString(63, 84, numStr, Font_16x26, WHITE, BLACK);
 		break;
@@ -318,22 +324,33 @@ static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita) {
 		break;
 	}
 	senhaEscrita[qntNumeros - 1] = numEnviado;
+	//para cada caso de botão (1,2,3 ou 4) ele manda o valor a ser printado no lcd
 }
 
 static void enviarNumeroPraSenha(int numEnviado, int qntNumeros,
 		int *senhaEscrita) {
 	escreverSenha(numEnviado, qntNumeros, senhaEscrita);
+	//bizarro
 }
 
 static void entrarSenha(void) {
+	//meu DEUS que absurdo imagina isso em assembly
 	bool senhaCorreta = false;
 	int qntNumeros = 0;
 	int senhaRand[4];
+	//a senha tem 4 "casas"
 	int senhaEscrita[4];
+	//a senha escrita que é o valor que você manda tambem tem 4 casas
 	int numEnviado = 0;
 	gerarSenha(senhaRand);
+	//gera a senha de uma vês e senhaRand
 	desenharTelaSenha();
+	//MUITO auto explicativo
 	for (int laranjas = 0; laranjas < 3; laranjas++) {
+		//adoro o sistema de for que eu criei meu deus
+		//aqui é o sistema de escrever a senha
+		//qntNumeros é quantos numeros você mandou pra senha e o cap é 4
+		//numEnviado é o VALOR do numero da senha (a senha foi a parte mais dificil pq tem o numero da senha real, os valores que agnt manda pra ela checar se asenha tá certa, a senha no display e agnt tendo que fazer malabarismo com esse tanto de string que tambem é uma int ao mesmo tempo foi horrivel)
 		while (qntNumeros < 4) {
 			if (botEsqLer == 0) {
 				HAL_Delay(250);
@@ -358,16 +375,20 @@ static void entrarSenha(void) {
 			}
 		}
 		bool iguais = true;
-		for (int i = 0; i < 4; i++) {
-			if (senhaEscrita[i] != senhaRand[i]) {
+		for (int roma = 0; roma < 4; roma++) {
+			//a fruta romã é uma delicia nhamnham
+			if (senhaEscrita[roma] != senhaRand[roma]) {
 				iguais = false;
 				break;
+				//se a senha no array escrito for diferente da senha do array que foi gerado lá atrás ele seta iguais pra false oq pra mim é bem engraçado MAS FUNCIONA TÁ PARA DE JULGAR O CÓDIGO NOSSO ANA LETICIA <3
 			}
 		}
 		if (iguais) {
+			//E AI ELE SETA A VARIAVEL BOOL senhaCorreta PRA TRUE KKLOL
 			senhaCorreta = true;
 			break;
 		} else {
+			//e se não ele apaga a senha do lcd e volta a qntNumeros pra 0
 			ST7789_DrawFilledRectangle(63, 84, 16, 26, BLACK);
 			ST7789_DrawFilledRectangle(93, 84, 16, 26, BLACK);
 			ST7789_DrawFilledRectangle(123, 84, 16, 26, BLACK);
@@ -375,6 +396,7 @@ static void entrarSenha(void) {
 			qntNumeros = 0;
 			for (int maracujas = 0; maracujas < 4; maracujas++) {
 				senhaEscrita[maracujas] = 0;
+				//e reseta o array
 			}
 		}
 	}
@@ -390,6 +412,7 @@ static void entrarSenha(void) {
 }
 
 static void desenharTelaAlunos() {
+	//tela dos alunos
 	ST7789_WriteString(24, 10, "Qnt. Alunos", Font_16x26, verdeFODA, BLACK);
 	ST7789_DrawFilledRectangle(100, 110, 50, 2, WHITE);
 	ST7789_WriteString(110, 150, "+1", Font_16x26, WHITE, BLACK);
@@ -399,9 +422,15 @@ static void desenharTelaAlunos() {
 }
 
 static void enviarNumeroAlunos(int numEnviado) {
+	//olha a magica
 	qntAlunosReg += numEnviado;
 	qntAlunosReg = (qntAlunosReg > 999) ? 999 : qntAlunosReg;
 	qntAlunosReg = (qntAlunosReg < 0) ? 0 : qntAlunosReg;
+	//itoa dnv meu deus
+	//numStr agora tem 5 casas pq o numero de alunos maximo é 100 por que certo alguem viu que a maior sala de aula do mundo cabe 150 alunos oque em si é um absurdo, nossa sala nem 50 alunos tem e mal dá pra ter aula
+	//além disso se vc se perguntar "mas 100 são 3 casas"
+	//algumas coisas tem queterminar com /0
+	//portanto alguns numStr vão ter mais 2 caracteres
 	char numStr[5];
 	itoa(qntAlunosReg, numStr, 10);
 	ST7789_DrawFilledRectangle(100, 84, 50, 26, BLACK);
@@ -415,6 +444,7 @@ static void enviarNumeroAlunos(int numEnviado) {
 
 }
 static void definirAlunos(void) {
+	//muito bonitinho que agnt separa as funções "internas" das que desenham no lcd
 	desenharTelaAlunos();
 	bool definindoAlunos = true;
 	int numEnviado = 0;
@@ -446,12 +476,16 @@ static void definirAlunos(void) {
 
 		} else if (botoesPressionados >= 2) {
 			definindoAlunos = false;
+			//assim que agnt terminar de setar os alunos é só clicar 2 botoes ao mesmo tempo que ele seta pra falso
 		}
 	}
+	//me desculpa mas OQUE É UM MALLOC
 	arrayMatriculas = malloc(qntAlunosReg * sizeof(int));
 }
 
 static int confirmarMatricula(void) {
+	//essa parte agente se esforçou MUITO mentalmente pra ter a ideia
+	//vc muda no proprio debug o valor oque é muito dahora, engraçado e complicado ao mesmo tempo
 	bool matriculaEnviada = false;
 	int valMatricula = -1;
 	while (!matriculaEnviada) {
@@ -494,10 +528,16 @@ static void controlePresenca(int numEnviado) {
 	} else if (confirmarMatricula() == 0) {
 		ST7789_WriteString(20, 200, "MATRICULA INVALIDA!", Font_11x18, WHITE,
 		BLACK);
+		//como a matricula é sempre 0 no estado não mutado dela
+		//se for 0 ela não adiciona ao array
 	}
 }
 
 static void controleSaida(int numEnviado) {
+	//BAGUNÇA AAAAAAAAAAAAAAAAAAAAA
+	//o controle de saida tá muito bem feito pelo menos
+	//tava fazendo projete no dia ent tudo culpa da livia
+	//MUITO BOM TAMBEM A PARTE DOS TICKS MEU DEUS eu demoraria 4 anos pra fazer algo pior que isso
 	qntAlunosFora += numEnviado;
 	qntAlunosFora =
 			(qntAlunosFora > maxAlunosFora) ? maxAlunosFora : qntAlunosFora;
@@ -552,16 +592,19 @@ static void encerrarPrograma(void) {
 			(qntTotalSaidas < qntTotalEntradas) ?
 					qntTotalSaidas : qntTotalEntradas;
 
-	for (int i = 0; i < menorQuantidade; i++) {
-		somaTempos += (arrayTempoEntrada[i] - arrayTempoSaida[i]);
+	for (int goiabas = 0; goiabas < menorQuantidade; goiabas++) {
+		somaTempos += (arrayTempoEntrada[goiabas] - arrayTempoSaida[goiabas]);
+		//matematica B]
 	}
 
 	uint32_t tempoMedioSaidas = 0;
 	if (menorQuantidade > 0)
 		tempoMedioSaidas = (somaTempos / menorQuantidade) / 1000;
+	//mais matematica mas essa só tá errada na verdade :p
 
 	uint32_t tempoFimAula = HAL_GetTick();
 	uint32_t tempoTotalAula = (tempoFimAula - tempoInicioAula) / 1000;
+	//esse tá certo
 	ST7789_Fill_Color(BLACK);
 	char numStr[11];
 	ST7789_WriteString(8, 26, "AULA CONCLUIDA", Font_16x26, WHITE, BLACK);
@@ -625,6 +668,7 @@ static void interfacePrincipal(void) {
 		}
 	}
 }
+//ai pronto :D
 /* USER CODE END 4 */
 
 /**
