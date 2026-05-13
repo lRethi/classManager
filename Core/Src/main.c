@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -107,6 +108,7 @@ int main(void) {
 	/* USER CODE BEGIN Init */
 	arrayTempoSaida = malloc(capArraySaida * sizeof(uint32_t));
 	arrayTempoEntrada = malloc(capArrayEntrada * sizeof(uint32_t));
+	// malloc
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -284,7 +286,7 @@ static void iniciarPrograma(void) {
 static void gerarSenha(int *senhaRand) {
 	srand(HAL_GetTick());
 	for (int bananas = 0; bananas < 4; bananas++) {
-		int valGerado = (rand() % 3) + 1;
+		int valGerado = (rand() % 4) + 1;
 		senhaRand[bananas] = valGerado;
 		//gera um numero por ves da senha
 	}
@@ -304,8 +306,8 @@ static void desenharTelaSenha(void) {
 }
 static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita) {
 	//MUITO DIFICIL DE ENTENDER mas é facil de usar
-	char numStr[2];
-	//o char numStr tem duas casas
+	char numStr[3];
+	//o char numStr tem três casas
 	itoa(numEnviado, numStr, 10);
 	//o numero enviado vai ser o numStr uhhhhh puts aqui eu realmente embananei faz tempo que agnt usou eu esqueci como funciona mds
 	switch (qntNumeros) {
@@ -330,7 +332,7 @@ static void escreverSenha(int numEnviado, int qntNumeros, int *senhaEscrita) {
 static void enviarNumeroPraSenha(int numEnviado, int qntNumeros,
 		int *senhaEscrita) {
 	escreverSenha(numEnviado, qntNumeros, senhaEscrita);
-	//bizarro
+	//bizarro // bizarro, cara.
 }
 
 static void entrarSenha(void) {
@@ -429,7 +431,7 @@ static void enviarNumeroAlunos(int numEnviado) {
 	//itoa dnv meu deus
 	//numStr agora tem 5 casas pq o numero de alunos maximo é 100 por que certo alguem viu que a maior sala de aula do mundo cabe 150 alunos oque em si é um absurdo, nossa sala nem 50 alunos tem e mal dá pra ter aula
 	//além disso se vc se perguntar "mas 100 são 3 casas"
-	//algumas coisas tem queterminar com /0
+	//algumas coisas tem queterminar com /0 // por ser uma string.
 	//portanto alguns numStr vão ter mais 2 caracteres
 	char numStr[5];
 	itoa(qntAlunosReg, numStr, 10);
@@ -480,7 +482,12 @@ static void definirAlunos(void) {
 		}
 	}
 	//me desculpa mas OQUE É UM MALLOC
-	arrayMatriculas = malloc(qntAlunosReg * sizeof(int));
+	//l: memory allocation. stupid.
+	arrayMatriculas = realloc(arrayMatriculas, qntAlunosReg * sizeof(int));
+
+	if (arrayMatriculas != NULL) {
+		memset(arrayMatriculas, 0, qntAlunosReg * sizeof(int));
+	}
 }
 
 static int confirmarMatricula(void) {
@@ -492,27 +499,27 @@ static int confirmarMatricula(void) {
 		if (valMatricula != -1) {
 			if (valMatricula == 0)
 				return 0;
-			for (int jacas = 0; jacas < sizeof(arrayMatriculas); jacas++) {
-				if (valMatricula == arrayMatriculas[jacas])
-					return 0;
-				else if (arrayMatriculas[jacas] == 0) {
+			for (int jacas = 0; jacas < qntAlunosReg; jacas++) {
+				if (arrayMatriculas[jacas] == 0) {
 					arrayMatriculas[jacas] = valMatricula;
 					matriculaEnviada = true;
-					break;
-				}
+					return 1;
+				} else if (valMatricula == arrayMatriculas[jacas])
+					return 0;
 			}
 		}
 	}
-	return 1;
+	return 0;
 }
 
 static void controlePresenca(int numEnviado) {
-	if (confirmarMatricula() == 1) {
+	int resultadoMatricula = confirmarMatricula();
+	if (resultadoMatricula == 1) {
 		qntAlunosSala += numEnviado;
 		qntAlunosSala =
 				(qntAlunosSala > qntAlunosReg) ? qntAlunosReg : qntAlunosSala;
 		qntAlunosSala = (qntAlunosSala < 0) ? 0 : qntAlunosSala;
-		char numStr[3];
+		char numStr[5];
 		itoa(qntAlunosSala, numStr, 10);
 		if (qntAlunosSala > 9) {
 			ST7789_DrawFilledRectangle(90, 26, 32, 26, BLACK);
@@ -525,7 +532,7 @@ static void controlePresenca(int numEnviado) {
 			ST7789_DrawFilledRectangle(106, 26, 16, 26, BLACK);
 			ST7789_WriteString(106, 26, numStr, Font_16x26, WHITE, BLACK);
 		}
-	} else if (confirmarMatricula() == 0) {
+	} else if (resultadoMatricula == 0) {
 		ST7789_WriteString(20, 200, "MATRICULA INVALIDA!", Font_11x18, WHITE,
 		BLACK);
 		//como a matricula é sempre 0 no estado não mutado dela
@@ -536,42 +543,38 @@ static void controlePresenca(int numEnviado) {
 static void controleSaida(int numEnviado) {
 	//BAGUNÇA AAAAAAAAAAAAAAAAAAAAA
 	//o controle de saida tá muito bem feito pelo menos
-	//tava fazendo projete no dia ent tudo culpa da livia
+	//tava fazendo projete no dia ent tudo culpa da livia // fuck you !
 	//MUITO BOM TAMBEM A PARTE DOS TICKS MEU DEUS eu demoraria 4 anos pra fazer algo pior que isso
-	qntAlunosFora += numEnviado;
-	qntAlunosFora =
-			(qntAlunosFora > maxAlunosFora) ? maxAlunosFora : qntAlunosFora;
-	qntAlunosFora = (qntAlunosFora > 0) ? qntAlunosFora : 0;
+    qntAlunosFora += numEnviado;
+    qntAlunosFora = (qntAlunosFora > maxAlunosFora) ? maxAlunosFora : qntAlunosFora;
+    qntAlunosFora = (qntAlunosFora > 0) ? qntAlunosFora : 0;
 
-	if (numEnviado == 1 && qntAlunosFora <= maxAlunosFora) {
-		uint32_t tempTick = HAL_GetTick();
-		qntTotalSaidas++;
-		if (qntTotalSaidas >= capArraySaida) {
-			int novoCap = capArraySaida * 2;
-			uint32_t *temp = realloc(arrayTempoSaida,
-					novoCap * sizeof(uint32_t));
+    uint32_t tempTick = HAL_GetTick();
 
-			if (temp != NULL) {
-				arrayTempoSaida = temp;
-				capArraySaida = novoCap;
-			}
-		}
-		arrayTempoSaida[qntTotalSaidas - 1] = tempTick;
-	} else if (numEnviado == -1) {
-		uint32_t tempTick = HAL_GetTick();
-		qntTotalEntradas++;
-		if (qntTotalEntradas >= capArrayEntrada) {
-			int novoCap = capArrayEntrada * 2;
-			uint32_t *temp = realloc(arrayTempoEntrada,
-					novoCap * sizeof(uint32_t));
+    if (numEnviado == 1) {
+        qntTotalSaidas++;
+        if (qntTotalSaidas >= capArraySaida) {
+            int novoCap = capArraySaida * 2;
+            uint32_t *temp = realloc(arrayTempoSaida, novoCap * sizeof(uint32_t));
+            if (temp != NULL) {
+                arrayTempoSaida = temp;
+                capArraySaida = novoCap;
+            }
+        }
+        arrayTempoSaida[qntTotalSaidas - 1] = tempTick;
 
-			if (temp != NULL) {
-				arrayTempoEntrada = temp;
-				capArrayEntrada = novoCap;
-			}
-		}
-		arrayTempoEntrada[qntTotalEntradas - 1] = tempTick;
-	}
+    } else if (numEnviado == -1) {
+        qntTotalEntradas++;
+        if (qntTotalEntradas >= capArrayEntrada) {
+            int novoCap = capArrayEntrada * 2;
+            uint32_t *temp = realloc(arrayTempoEntrada, novoCap * sizeof(uint32_t));
+            if (temp != NULL) {
+                arrayTempoEntrada = temp;
+                capArrayEntrada = novoCap;
+            }
+        }
+        arrayTempoEntrada[qntTotalEntradas - 1] = tempTick;
+    }
 
 	int qntDisponivel = 3 - qntAlunosFora;
 
@@ -600,11 +603,13 @@ static void encerrarPrograma(void) {
 	uint32_t tempoMedioSaidas = 0;
 	if (menorQuantidade > 0)
 		tempoMedioSaidas = (somaTempos / menorQuantidade) / 1000;
-	//mais matematica mas essa só tá errada na verdade :p
+	//matematica 2 B]
+	//eletric boogaloo
 
 	uint32_t tempoFimAula = HAL_GetTick();
 	uint32_t tempoTotalAula = (tempoFimAula - tempoInicioAula) / 1000;
-	//esse tá certo
+	//matematica 3 B]
+	//o inimigo agora é outro
 	ST7789_Fill_Color(BLACK);
 	char numStr[11];
 	ST7789_WriteString(8, 26, "AULA CONCLUIDA", Font_16x26, WHITE, BLACK);
