@@ -43,7 +43,7 @@
 #define botBxoLer HAL_GPIO_ReadPin(botBaixo_GPIO_Port, botBaixo_Pin)
 
 #define tentMaxSenhas 3
-#define maxAlunosFora 3
+#define tempMaxAlunosFora 3
 
 #define roxoDS		0xa81f
 #define verdeFODA	0x0463
@@ -65,6 +65,7 @@ int qntTotalSaidas;
 int qntTotalEntradas;
 int capArraySaida = 4;
 int capArrayEntrada = 4;
+int maxAlunosFora;
 uint32_t *arrayTempoSaida = NULL;
 uint32_t *arrayTempoEntrada = NULL;
 uint32_t *arrayMatriculas = NULL;
@@ -535,6 +536,8 @@ static void controlePresenca(int numEnviado) {
 	} else if (resultadoMatricula == 0) {
 		ST7789_WriteString(20, 200, "MATRICULA INVALIDA!", Font_11x18, WHITE,
 		BLACK);
+		HAL_Delay(2000);
+		ST7789_DrawFilledRectangle(20, 200, 11, 18, BLACK);
 		//como a matricula é sempre 0 no estado não mutado dela
 		//se for 0 ela não adiciona ao array
 	}
@@ -576,7 +579,7 @@ static void controleSaida(int numEnviado) {
         arrayTempoEntrada[qntTotalEntradas - 1] = tempTick;
     }
 
-	int qntDisponivel = 3 - qntAlunosFora;
+	int qntDisponivel = maxAlunosFora - qntAlunosFora;
 
 	char numStr[3];
 	itoa(qntAlunosFora, numStr, 10);
@@ -636,15 +639,18 @@ static void encerrarPrograma(void) {
 
 static void interfacePrincipal(void) {
 	tempoInicioAula = HAL_GetTick();
+	maxAlunosFora = (qntAlunosReg > tempMaxAlunosFora) ? tempMaxAlunosFora : qntAlunosReg;
 	ST7789_Fill_Color(BLACK);
-	ST7789_WriteString(110, 150, "+", Font_16x26, WHITE, BLACK);
-	ST7789_WriteString(145, 180, "+", Font_16x26, GREEN, BLACK);
-	ST7789_WriteString(110, 210, "-", Font_16x26, WHITE, BLACK);
-	ST7789_WriteString(75, 180, "-", Font_16x26, RED, BLACK);
+	ST7789_WriteString(110, 80, "+", Font_16x26, WHITE, BLACK);
+	ST7789_WriteString(145, 110, "E", Font_16x26, GREEN, BLACK);
+	ST7789_WriteString(110, 140, "-", Font_16x26, WHITE, BLACK);
+	ST7789_WriteString(75, 110, "S", Font_16x26, RED, BLACK);
+	ST7789_DrawRectangle(70, 75, 165, 165, WHITE);
 	ST7789_WriteString(30, 100, "0", Font_16x26, RED, BLACK);
-	ST7789_WriteString(190, 100, "3", Font_16x26, GREEN, BLACK);
-	ST7789_WriteString(90, 26, "00/", Font_16x26, WHITE, BLACK);
 	char numStr[3];
+	itoa(maxAlunosFora, numStr, 10);
+	ST7789_WriteString(190, 100, numStr, Font_16x26, GREEN, BLACK);
+	ST7789_WriteString(90, 26, "00/", Font_16x26, WHITE, BLACK);
 	itoa(qntAlunosReg, numStr, 10);
 	ST7789_WriteString(138, 26, numStr, Font_16x26, WHITE, BLACK);
 	while (1) {
