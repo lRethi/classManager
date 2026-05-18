@@ -18,6 +18,13 @@ A aplicação utiliza quatro botões em **pull-up** para navegação e entrada d
 6. encerramento da aula com exibição de estatísticas.
 
 ### 🎥 Demonstração do projeto (Link, clique para abrir!)
+<a href="https://www.youtube.com/watch?v=YprnkfKEc30" target="_blank">
+  <div style="position: relative; display: inline-block;">
+    <img src="https://img.youtube.com/vi/YprnkfKEc30/0.jpg" width="500">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/YouTube_social_white_squircle_%282017%29.svg"
+         style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; opacity: 0.9;">
+  </div>
+</a>
 [![Demo do projeto](https://img.youtube.com/vi/YprnkfKEc30/0.jpg)](https://www.youtube.com/watch?v=YprnkfKEc30)
 
 ## Hardware utilizado
