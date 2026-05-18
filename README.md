@@ -17,6 +17,9 @@ A aplicação utiliza quatro botões em **pull-up** para navegação e entrada d
 5. registro de saídas e entradas;
 6. encerramento da aula com exibição de estatísticas.
 
+### 🎥 Demonstração do projeto
+[![Demo do projeto](https://img.youtube.com/vi/YprnkfKEc30/0.jpg)](https://www.youtube.com/watch?v=YprnkfKEc30)
+
 ## Hardware utilizado
 
 - STM32F103C8
