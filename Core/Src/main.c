@@ -62,10 +62,12 @@ int qntAlunosSala;
 int qntAlunosReg;
 int qntAlunosFora;
 int qntTotalSaidas;
+int indiceSaidaPareamento = 0;
 int qntTotalEntradas;
 int capArraySaida = 4;
 int capArrayEntrada = 4;
 int maxAlunosFora;
+uint32_t somaTempos = 0;
 uint32_t *arrayTempoSaida = NULL;
 uint32_t *arrayTempoEntrada = NULL;
 uint32_t *arrayMatriculas = NULL;
@@ -455,7 +457,7 @@ static void definirAlunos(void) {
 		int botoesPressionados = (botEsqLer == 0) + (botDirLer == 0)
 				+ (botCmaLer == 0) + (botBxoLer == 0);
 
-		HAL_Delay(50);
+		HAL_Delay(150);
 
 		if (botEsqLer == 0 && botoesPressionados == 1) {
 			HAL_Delay(250);
@@ -491,9 +493,11 @@ static void definirAlunos(void) {
 	}
 }
 
-static int confirmarMatricula(void) {
+static int confirmarMatricula(int numEnviado) {
 	//essa parte agente se esforçou MUITO mentalmente pra ter a ideia
 	//vc muda no proprio debug o valor oque é muito dahora, engraçado e complicado ao mesmo tempo
+	if (numEnviado == -1)
+		return 1;
 	bool matriculaEnviada = false;
 	int valMatricula = -1;
 	while (!matriculaEnviada) {
@@ -513,9 +517,22 @@ static int confirmarMatricula(void) {
 	return 0;
 }
 
+static void removerMatricula(void) {
+	for (int cagaitas = (qntAlunosReg - 1); cagaitas >= 0; cagaitas--) {
+		if (arrayMatriculas[cagaitas] != 0) {
+			arrayMatriculas[cagaitas] = 0;
+			break;
+		}
+	}
+}
+
 static void controlePresenca(int numEnviado) {
-	int resultadoMatricula = confirmarMatricula();
-	if (resultadoMatricula == 1) {
+	int resultadoMatricula = confirmarMatricula(numEnviado);
+
+	if (numEnviado == -1)
+		removerMatricula();
+
+	if (resultadoMatricula == 1 || numEnviado == -1) {
 		qntAlunosSala += numEnviado;
 		qntAlunosSala =
 				(qntAlunosSala > qntAlunosReg) ? qntAlunosReg : qntAlunosSala;
@@ -537,7 +554,8 @@ static void controlePresenca(int numEnviado) {
 		ST7789_WriteString(20, 200, "MATRICULA INVALIDA!", Font_11x18, WHITE,
 		BLACK);
 		HAL_Delay(2000);
-		ST7789_DrawFilledRectangle(20, 200, 11, 18, BLACK);
+		ST7789_WriteString(20, 200, "MATRICULA INVALIDA!", Font_11x18, BLACK,
+		BLACK);
 		//como a matricula é sempre 0 no estado não mutado dela
 		//se for 0 ela não adiciona ao array
 	}
@@ -548,36 +566,49 @@ static void controleSaida(int numEnviado) {
 	//o controle de saida tá muito bem feito pelo menos
 	//tava fazendo projete no dia ent tudo culpa da livia // fuck you !
 	//MUITO BOM TAMBEM A PARTE DOS TICKS MEU DEUS eu demoraria 4 anos pra fazer algo pior que isso
-    qntAlunosFora += numEnviado;
-    qntAlunosFora = (qntAlunosFora > maxAlunosFora) ? maxAlunosFora : qntAlunosFora;
-    qntAlunosFora = (qntAlunosFora > 0) ? qntAlunosFora : 0;
+	uint32_t tempTick = HAL_GetTick();
 
-    uint32_t tempTick = HAL_GetTick();
+	if (numEnviado == -1 && qntAlunosFora <= 0) {
+		return;
+	}
 
-    if (numEnviado == 1) {
-        qntTotalSaidas++;
-        if (qntTotalSaidas >= capArraySaida) {
-            int novoCap = capArraySaida * 2;
-            uint32_t *temp = realloc(arrayTempoSaida, novoCap * sizeof(uint32_t));
-            if (temp != NULL) {
-                arrayTempoSaida = temp;
-                capArraySaida = novoCap;
-            }
-        }
-        arrayTempoSaida[qntTotalSaidas - 1] = tempTick;
+	qntAlunosFora += numEnviado;
+	qntAlunosFora =
+			(qntAlunosFora > maxAlunosFora) ? maxAlunosFora : qntAlunosFora;
 
-    } else if (numEnviado == -1) {
-        qntTotalEntradas++;
-        if (qntTotalEntradas >= capArrayEntrada) {
-            int novoCap = capArrayEntrada * 2;
-            uint32_t *temp = realloc(arrayTempoEntrada, novoCap * sizeof(uint32_t));
-            if (temp != NULL) {
-                arrayTempoEntrada = temp;
-                capArrayEntrada = novoCap;
-            }
-        }
-        arrayTempoEntrada[qntTotalEntradas - 1] = tempTick;
-    }
+	if (numEnviado == 1) {
+		qntTotalSaidas++;
+		if (qntTotalSaidas >= capArraySaida) {
+			int novoCap = capArraySaida * 2;
+			uint32_t *temp = realloc(arrayTempoSaida,
+					novoCap * sizeof(uint32_t));
+			if (temp != NULL) {
+				arrayTempoSaida = temp;
+				capArraySaida = novoCap;
+			}
+		}
+		arrayTempoSaida[qntTotalSaidas - 1] = tempTick;
+	} else if (numEnviado == -1) {
+		qntTotalEntradas++;
+		if (qntTotalEntradas >= capArrayEntrada) {
+			int novoCap = capArrayEntrada * 2;
+			uint32_t *temp = realloc(arrayTempoEntrada,
+					novoCap * sizeof(uint32_t));
+			if (temp != NULL) {
+				arrayTempoEntrada = temp;
+				capArrayEntrada = novoCap;
+			}
+		}
+		arrayTempoEntrada[qntTotalEntradas - 1] = tempTick;
+		if (indiceSaidaPareamento < qntTotalSaidas) {
+			uint32_t saida = arrayTempoSaida[indiceSaidaPareamento];
+
+			if (tempTick >= saida) {
+				somaTempos += (tempTick - saida);
+				indiceSaidaPareamento++;
+			}
+		}
+	}
 
 	int qntDisponivel = maxAlunosFora - qntAlunosFora;
 
@@ -592,16 +623,7 @@ static void controleSaida(int numEnviado) {
 }
 
 static void encerrarPrograma(void) {
-	uint32_t somaTempos = 0;
-
-	int menorQuantidade =
-			(qntTotalSaidas < qntTotalEntradas) ?
-					qntTotalSaidas : qntTotalEntradas;
-
-	for (int goiabas = 0; goiabas < menorQuantidade; goiabas++) {
-		somaTempos += (arrayTempoEntrada[goiabas] - arrayTempoSaida[goiabas]);
-		//matematica B]
-	}
+	int menorQuantidade = indiceSaidaPareamento;
 
 	uint32_t tempoMedioSaidas = 0;
 	if (menorQuantidade > 0)
@@ -639,7 +661,9 @@ static void encerrarPrograma(void) {
 
 static void interfacePrincipal(void) {
 	tempoInicioAula = HAL_GetTick();
-	maxAlunosFora = (qntAlunosReg > tempMaxAlunosFora) ? tempMaxAlunosFora : qntAlunosReg;
+	maxAlunosFora = (qntAlunosReg > tempMaxAlunosFora) ?
+	tempMaxAlunosFora :
+															qntAlunosReg;
 	ST7789_Fill_Color(BLACK);
 	ST7789_WriteString(110, 80, "+", Font_16x26, WHITE, BLACK);
 	ST7789_WriteString(145, 110, "E", Font_16x26, GREEN, BLACK);
@@ -656,7 +680,7 @@ static void interfacePrincipal(void) {
 	while (1) {
 		int botoesPressionados = (botEsqLer == 0) + (botDirLer == 0)
 				+ (botCmaLer == 0) + (botBxoLer == 0);
-		HAL_Delay(50);
+		HAL_Delay(150);
 
 		if (botEsqLer == 0 && botoesPressionados == 1) {
 			HAL_Delay(250);
